@@ -1,0 +1,29 @@
+{
+  "name": "create_account",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google-cloud/vision": "^5.3.4",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "firebase": "^12.10.0",
+    "firebase-admin": "^13.7.0",
+    "ioredis": "^5.10.0",
+    "jsonwebtoken": "^9.0.3",
+    "minio": "^8.0.7",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.1",
+    "pg": "^8.20.0",
+    "sharp": "^0.34.5",
+    "uuid": "^13.0.0"
+  }
+}
