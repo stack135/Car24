@@ -1,62 +1,107 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const bookingSchema = new mongoose.Schema({
+const Booking = sequelize.define('Booking', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   },
   carId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Car',
-    required: true
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'Cars',
+      key: 'id'
+    }
   },
   branchId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Branch',
-    required: true
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'Branches',
+      key: 'id'
+    }
   },
   pickupDate: {
-    type: Date,
-    required: true
+    type: DataTypes.DATE,
+    allowNull: false
   },
   dropoffDate: {
-    type: Date,
-    required: true
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  pickupTime: {
+    type: DataTypes.STRING(8),
+    allowNull: false
+  },
+  dropoffTime: {
+    type: DataTypes.STRING(8),
+    allowNull: false
+  },
+  duration: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 6,
+      max: 24
+    }
   },
   pickupLocation: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   dropoffLocation: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   totalPrice: {
-    type: Number,
-    required: true
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
   },
   status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'active', 'completed', 'cancelled'],
-    default: 'pending'
+    type: DataTypes.ENUM('pending', 'confirmed', 'active', 'completed', 'cancelled'),
+    defaultValue: 'pending'
   },
   paymentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Payment'
+    type: DataTypes.UUID,
+    references: {
+      model: 'Payments',
+      key: 'id'
+    }
   },
-  extras: [{
-    name: String,
-    price: Number
-  }],
+  extras: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
   confirmationNumber: {
-    type: String,
+    type: DataTypes.STRING,
     unique: true
   },
   createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    type: DataTypes.UUID,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  updatedBy: {
+    type: DataTypes.UUID,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   }
-}, { timestamps: true });
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('Booking', bookingSchema);
+module.exports = Booking;

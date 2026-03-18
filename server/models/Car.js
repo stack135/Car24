@@ -1,60 +1,162 @@
-const mongoose = require('mongoose');
+// models/Car.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const carSchema = new mongoose.Schema({
+const Car = sequelize.define('Car', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   branchId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Branch',
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'branchId',  // Map to snake_case in DB
+    references: {
+      model: 'branches',
+      key: 'id'
+    }
+  },
+  ownerId: {
+    type: DataTypes.INTEGER,  // Make sure this is INTEGER
+    allowNull: false,
+    field: 'ownerId',  // Map to camelCase in DB
+    references: {
+      model: 'owners',
+      key: 'id'
+    }
   },
   make: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   model: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   year: {
-    type: Number,
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   category: {
-    type: String,
-    enum: ['economy', 'suv', 'luxury', 'van'],
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   transmission: {
-    type: String,
-    enum: ['automatic', 'manual'],
-    required: true
+    type: DataTypes.ENUM('automatic', 'manual'),
+    allowNull: false
   },
   fuelType: {
-    type: String,
-    required: true
+    type: DataTypes.ENUM('petrol', 'diesel', 'electric', 'hybrid', 'cng'),
+    allowNull: false,
+    field: 'fuelType'
   },
   seatingCapacity: {
-    type: Number,
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'seatingCapacity'
   },
-  pricePerDay: {
-    type: Number,
-    required: true
-  },
-  images: [String],
-  features: [String],
-  isAvailable: {
-    type: Boolean,
-    default: true
+  pricePerTrip: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    field: 'price_per_trip'  // FIXED: Use snake_case
   },
   licensePlate: {
-    type: String,
-    required: true,
-    unique: true
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    field: 'licensePlate'
+  },
+  color: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  images: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: null,
+    get() {
+      const value = this.getDataValue('images');
+      return value || [];
+    }
+  },
+  features: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: null,
+    get() {
+      const value = this.getDataValue('features');
+      return value || [];
+    }
   },
   mileage: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  licenseDocument: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'licenseDocument'
+  },
+  ownerPanNumber: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'ownerPanNumber'
+  },
+  ownerBankAccount: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'ownerBankAccount'
+  },
+  ownerIfscCode: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'ownerIfscCode'
+  },
+  ownerBankName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'ownerBankName'
+  },
+  ownerUpiId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'ownerUpiId'
+  },
+  approvalStatus: {
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    defaultValue: 'pending',
+    field: 'approvalStatus'
+  },
+  status: {
+    type: DataTypes.STRING,
+    defaultValue: 'available'
+  },
+  isAvailable: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    field: 'isAvailable'
+  },
+  rating: {
+    type: DataTypes.DECIMAL(3, 2),
+    defaultValue: 0
+  },
+  totalRatings: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    field: 'total_ratings'
+  },
+  ratingSum: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    field: 'rating_sum'
   }
-}, { timestamps: true });
+}, {
+  tableName: 'cars',
+  timestamps: true,
+  underscored: false,  // Use camelCase column names
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+});
 
-module.exports = mongoose.model('Car', carSchema);
+module.exports = Car;

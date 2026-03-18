@@ -1,0 +1,36 @@
+const express = require('express');
+const router = express.Router();
+const { User } = require('../models');
+const { protect, authorize } = require('../middleware/auth');
+
+// Get all users (Admin, Super Admin)
+router.get('/', protect, authorize('admin', 'super_admin'), async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] }
+    });
+    res.json({ success: true, data: users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Update user role (Admin, Super Admin)
+router.patch('/:id/role', protect, authorize('admin', 'super_admin'), async (req, res) => {
+  try {
+    const { role } = req.body;
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    await user.update({ role });
+    const { password, ...userWithoutPassword } = user.toJSON();
+    res.json({ success: true, data: userWithoutPassword });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+module.exports = router;

@@ -359,7 +359,7 @@ Car24 is a modern, professional Single Page Application (SPA) designed for renta
   transmission: String (enum: ['automatic', 'manual']),
   fuelType: String,
   seatingCapacity: Number,
-  pricePerDay: Number,
+  pricepertrip: Number,
   images: [String],
   features: [String],
   isAvailable: Boolean,

@@ -1,0 +1,705 @@
+{
+  "info": {
+    "name": "Car24 Rental Platform API",
+    "description": "Complete API collection for Car24 rental platform with QR payment system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api"
+    },
+    {
+      "key": "userToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "ownerToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@car24.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"9876543210\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@car24.com\",\n  \"password\": \"admin123\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"User\",\n  \"phone\": \"9876543210\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@car24.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@car24.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Branches",
+      "item": [
+        {
+          "name": "Create Branch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Main Branch\",\n  \"address\": \"123 Main Street\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"zipCode\": \"400001\",\n  \"phone\": \"9876543210\",\n  \"email\": \"main@car24.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/branches",
+              "host": ["{{baseUrl}}"],
+              "path": ["branches"]
+            }
+          }
+        },
+        {
+          "name": "Get All Branches",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/branches",
+              "host": ["{{baseUrl}}"],
+              "path": ["branches"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Owner Management",
+      "item": [
+        {
+          "name": "Register as Owner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessName\": \"ABC Car Rentals\",\n  \"businessLicense\": \"BL123456789\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"gstNumber\": \"12ABCDE3456F1Z5\",\n  \"bankAccountNumber\": \"1234567890123456\",\n  \"ifscCode\": \"SBIN0001234\",\n  \"upiId\": \"owner@paytm\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/owners/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["owners", "register"]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Owners",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owners/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["owners", "pending"]
+            }
+          }
+        },
+        {
+          "name": "Approve Owner",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approvalStatus\": \"approved\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/owners/1/approval",
+              "host": ["{{baseUrl}}"],
+              "path": ["owners", "1", "approval"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Car Management",
+      "item": [
+        {
+          "name": "Add Car",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": 1,\n  \"make\": \"Toyota\",\n  \"model\": \"Innova Crysta\",\n  \"year\": 2023,\n  \"category\": \"suv\",\n  \"transmission\": \"manual\",\n  \"fuelType\": \"diesel\",\n  \"seatingCapacity\": 7,\n  \"pricePerTrip\": 25.00,\n  \"licensePlate\": \"MH01AB1234\",\n  \"color\": \"White\",\n  \"licenseDocument\": \"https://example.com/license.jpg\",\n  \"ownerPanNumber\": \"ABCDE1234F\",\n  \"ownerBankAccount\": \"1234567890123456\",\n  \"ownerIfscCode\": \"SBIN0001234\",\n  \"ownerBankName\": \"State Bank of India\",\n  \"ownerUpiId\": \"owner@ybl\",\n  \"features\": [\"AC\", \"GPS\", \"Bluetooth\", \"Power Steering\"],\n  \"images\": [\"https://example.com/car1.jpg\", \"https://example.com/car2.jpg\"],\n  \"mileage\": 15000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cars",
+              "host": ["{{baseUrl}}"],
+              "path": ["cars"]
+            }
+          }
+        },
+        {
+          "name": "Get All Cars",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/cars",
+              "host": ["{{baseUrl}}"],
+              "path": ["cars"]
+            }
+          }
+        },
+        {
+          "name": "Approve Car",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approvalStatus\": \"approved\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cars/1/approval",
+              "host": ["{{baseUrl}}"],
+              "path": ["cars", "1", "approval"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Car Pricing",
+      "item": [
+        {
+          "name": "Set Car Pricing - 6 Hours",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": 1,\n  \"duration\": 6,\n  \"price\": 500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/car-pricing",
+              "host": ["{{baseUrl}}"],
+              "path": ["car-pricing"]
+            }
+          }
+        },
+        {
+          "name": "Set Car Pricing - 12 Hours",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": 1,\n  \"duration\": 12,\n  \"price\": 800\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/car-pricing",
+              "host": ["{{baseUrl}}"],
+              "path": ["car-pricing"]
+            }
+          }
+        },
+        {
+          "name": "Set Car Pricing - 24 Hours",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": 1,\n  \"duration\": 24,\n  \"price\": 1200\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/car-pricing",
+              "host": ["{{baseUrl}}"],
+              "path": ["car-pricing"]
+            }
+          }
+        },
+        {
+          "name": "Get Car Pricing",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/car-pricing/car/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["car-pricing", "car", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Booking System",
+      "item": [
+        {
+          "name": "Create Booking with QR Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": 1,\n  \"branchId\": 1,\n  \"pickupDate\": \"2024-03-15\",\n  \"pickupTime\": \"10:00:00\",\n  \"dropoffDate\": \"2024-03-15\",\n  \"dropoffTime\": \"16:00:00\",\n  \"duration\": 6,\n  \"pickupLocation\": \"Main Branch\",\n  \"dropoffLocation\": \"Main Branch\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/my-bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "my-bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get All Bookings (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/1/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "1", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment System",
+      "item": [
+        {
+          "name": "Verify Advance Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "bookingId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "transactionId",
+                  "value": "TXN123456789",
+                  "type": "text"
+                },
+                {
+                  "key": "paymentMethod",
+                  "value": "UPI",
+                  "type": "text"
+                },
+                {
+                  "key": "paymentScreenshot",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Pay Remaining Amount",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "bookingId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "transactionId",
+                  "value": "TXN987654321",
+                  "type": "text"
+                },
+                {
+                  "key": "paymentMethod",
+                  "value": "UPI",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/pay-remaining",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "pay-remaining"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "history"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ride Management",
+      "item": [
+        {
+          "name": "Start Ride",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rides/start/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["rides", "start", "1"]
+            }
+          }
+        },
+        {
+          "name": "End Ride",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rides/end/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["rides", "end", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Ride Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rides/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["rides", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Active Rides (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rides/active/list",
+              "host": ["{{baseUrl}}"],
+              "path": ["rides", "active", "list"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refund Management",
+      "item": [
+        {
+          "name": "Get My Refunds",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/refunds/my-refunds",
+              "host": ["{{baseUrl}}"],
+              "path": ["refunds", "my-refunds"]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Refunds (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/refunds/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["refunds", "pending"]
+            }
+          }
+        },
+        {
+          "name": "Process Refund (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refundStatus\": \"processed\",\n  \"refundTransactionId\": \"REF123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/refunds/1/process",
+              "host": ["{{baseUrl}}"],
+              "path": ["refunds", "1", "process"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
