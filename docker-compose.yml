@@ -30,26 +30,26 @@ services:
    - minio_data:/data
   command: server /data --console-address ":9001"
   restart: always
-#  backend: 
-#   build: ./
-#   container_name: backend
-#   ports: 
-#    - "3000:3000"
-#   depends_on: 
-#    - minIo
-#    - redis
-#    - postgres
-#   environment: 
-#    PORT : 3000
-#    nodemailer_pass : njry tlkh carc dpbw
-#    table : users
-#    Management : management
-#    branch_table : branches
-#    cars_table : cars  
-#    booking_table : bookings
-#    jwt_key : 9392983478
-#    RazorpayAPIKey : rzp_test_STuA5rLGbi8xST 
-#    RazorpayKeySecret : 8F1lSZLsERQeFtpTW47Ev4an
+ backend: 
+  build: ./
+  container_name: backend
+  ports: 
+   - "3000:3000"
+  depends_on: 
+   - minIo
+   - redis
+   - postgres
+  environment: 
+   PORT : 3000
+   nodemailer_pass : njry tlkh carc dpbw
+   table : users
+   Management : management
+   branch_table : branches
+   cars_table : cars  
+   booking_table : bookings
+   jwt_key : 9392983478
+   RazorpayAPIKey : rzp_test_STuA5rLGbi8xST 
+   RazorpayKeySecret : 8F1lSZLsERQeFtpTW47Ev4an
 volumes:  
   minio_data:
   postgres_data:
