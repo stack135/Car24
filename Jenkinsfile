@@ -8,8 +8,8 @@ pipeline {
     stages {
         stage('Run Docker Compose') {
             steps {
-                sh 'docker compose down'
-                sh 'docker compose up -d --build'
+                sh 'docker-compose down'
+sh 'docker-compose up -d --build'
             }
         }
     }
