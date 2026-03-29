@@ -2,7 +2,7 @@ const { Pool } = require("pg");
 const Redis = require("ioredis");
 
 const pool = new Pool({
-  host: "localhost",
+  host: "postgres",
   port: 5432,       
   user: "admin",
   password: "admin",
@@ -16,7 +16,7 @@ const pool = new Pool({
 //   }
 // });
 const redis = new Redis({
-  host: "localhost",
+  host: "redis",
   port: 6379
 });
 function connecttodb() {
