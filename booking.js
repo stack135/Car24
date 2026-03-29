@@ -6,6 +6,7 @@ const minioClient = require("./minioConnect")
 const rateLimiter = require("./rateLimiter")
 const razorpay = require("./connectRazorPay") 
 const crypto = require("crypto");
+const sendNotification=require("./expoNotification")
 require("dotenv").config()
 function calculatePrice(slots, pricing) {
   if (!Array.isArray(slots) || slots.length === 0) {
@@ -363,7 +364,14 @@ router.post("/verify-payment", async (req, res) => {
     if (bookingRes.rows.length === 0) {
       return res.status(404).json({ message: "Booking not found" });
     }
-
+const userRes=await client.query(
+  `SELECT expo_token FROM TABLE users WHERE id=$1`,[bookingRes.userId]
+)
+if(userRes.rows.length===0){
+  res.status(400).json({message:"user not found"})
+}
+userData=userRes.rows[0]
+const expoToken=userData.expo_token
     const booking = bookingRes.rows[0];
     console.log('Booking fetched:', booking);
 
@@ -444,6 +452,19 @@ router.post("/verify-payment", async (req, res) => {
 
     await client.query("COMMIT");
     console.log(`✅ Booking ${booking.id} confirmed`);
+if(expoToken){
+  const data={
+navigation:"/booking",
+bookingid:booking.id
+  }
+const exposend=await sendNotification(expoToken,"Booking Confirmation",`Your Booking confirmation number is ${otp} `,data)
+
+if(exposend){
+  console.log("notification send")
+}else{
+   console.log("notification notsend")
+}
+}
 
     res.json({
       message:   "Payment verified successfully",
@@ -787,7 +808,21 @@ router.get("/ownerBookings", rateLimiter, async (req, res) => {
 // In booking.js or a separate credits router
 router.get("/myCredits", rateLimiter, async (req, res) => {
   try {
-    const userId = 1; // ← replace with JWT later
+     const header = req.headers.authorization;
+    if (!header) {
+      return res.status(401).json({ message: "Missing authorization headers" });
+    }
+    
+    const token = header.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ message: "Token not found" });
+    }
+
+    const payload = await veriftJWT(token);
+    if (!payload) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+    const userId = payload.id; // ← replace with JWT later
 
     const result = await pool.query(
       `SELECT 
