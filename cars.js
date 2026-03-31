@@ -640,8 +640,8 @@ router.get("/owner_cars", rateLimiter, async (req, res) => {
         -- Count total trips for each car
         (SELECT COUNT(*) FROM bookings bk WHERE bk."carId" = c.id) as total_trips
       FROM ${process.env.cars_table} c
-      JOIN branches b ON c."branchid" = b.id
-      WHERE c.ownerid = $1
+      JOIN branches b ON c."branchId" = b.id
+      WHERE c.ownerId = $1
       ORDER BY c."createdAt" DESC
     `, [ownerId]);
 
