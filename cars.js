@@ -281,7 +281,7 @@ router.get("/get_cars", rateLimiter, async (req, res) => {
     let query = `
       SELECT c.*, b.name as branch_name
       FROM cars c
-      JOIN branches b ON c."branchId" = b.id
+      JOIN branches b ON c."branchid" = b.id
       WHERE c.approvalstatus = 'approved'
       
     `;
@@ -324,7 +324,7 @@ if (colour) {
 }
 
 if (branch) {
-  query += ` AND c."branchId" = $${count++}`;
+  query += ` AND c."branchid" = $${count++}`;
   values.push(parseInt(branch));
 }
 
@@ -385,7 +385,7 @@ if (branch) {
     let countQuery = `
       SELECT COUNT(*) 
       FROM cars c
-      JOIN branches b ON c."branchId" = b.id
+      JOIN branches b ON c."branchid" = b.id
       WHERE c.approvalstatus = 'approved'
       
     `;
@@ -475,16 +475,18 @@ if (branch) {
 router.get("/get_car/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("came id=",id)
     const result = await pool.query(`
       SELECT c.*, b.name as branch_name, b.city as branch_city, b.address as branch_address
-      FROM ${process.env.cars_table || 'cars'} c
-      JOIN ${process.env.branch_table || 'branches'} b ON c."branchId" = b.id
+      FROM  cars c
+      JOIN branches b ON c."branchid" = b.id
       WHERE c.id = $1 
       AND c.approvalstatus = 'approved'
     `, [id]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Car not found' });
+console.log("result",result)
+      return res.status(404).json({data:result.rows[0], message: 'Car not found' });
     }
 
     let car = result.rows[0];
@@ -519,8 +521,41 @@ router.get("/get_car/:id", async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: e.message });
   }
 });
+router.get("/branch_cars/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isavailable, approvalstatus,status } = req.query;
 
+    let query = `SELECT * FROM cars WHERE "branchid" = $1`;
+    let values = [id];
+    let index = 2;
 
+    
+    if (isavailable !== undefined) {
+      query += ` AND "isAvailable" = $${index++}`;
+      values.push(isavailable === "true");
+    }
+
+    if (approvalstatus !== undefined) {
+      query += ` AND approvalstatus = $${index++}`;
+      values.push(approvalstatus);
+    }
+if(status!==undefined){
+  query += `AND status=$${index++}`
+  values.push(status)
+}
+    const result = await pool.query(query, values);
+
+    res.json({
+      count: result.rows.length,
+      data: result.rows
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 // branches router
 router.get("/get_branches", async (req, res) => {
   try {
@@ -533,7 +568,60 @@ router.get("/get_branches", async (req, res) => {
   }
 });
 
+router.put("/updateCar/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const allowedFields = [
+      "branchId",
+      "approvalstatus",
+      "six_hr_price",
+      "twelve_hr_price",
+      "twentyfour_hr_price",
+      "status"
+    ];
 
+    const updates = Object.fromEntries(
+      Object.entries(req.body).filter(([key]) =>
+        allowedFields.includes(key)
+      )
+    );
+
+    const keys = Object.keys(updates);
+
+    if (keys.length === 0) {
+      return res.status(400).json({ message: "No fields to update" });
+    }
+
+    // Build dynamic query
+    const setClause = keys
+      .map((key, i) => `"${key}" = $${i + 1}`)
+      .join(", ");
+
+    const values = Object.values(updates);
+
+    const query = `
+      UPDATE cars
+      SET ${setClause}
+      WHERE id = $${keys.length + 1}
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [...values, id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Car not found" });
+    }
+
+    res.status(200).json({
+      message: "Car updated successfully",
+      data: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error("Update Car Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 // In your cars router
 router.get("/owner_cars", rateLimiter, async (req, res) => {
   try {
@@ -547,11 +635,12 @@ router.get("/owner_cars", rateLimiter, async (req, res) => {
       SELECT 
         c.*,
         b.name as branch_name,
+        
         b.city as branch_city,
         -- Count total trips for each car
         (SELECT COUNT(*) FROM bookings bk WHERE bk."carId" = c.id) as total_trips
       FROM ${process.env.cars_table} c
-      JOIN branches b ON c."branchId" = b.id
+      JOIN branches b ON c."branchid" = b.id
       WHERE c.ownerid = $1
       ORDER BY c."createdAt" DESC
     `, [ownerId]);

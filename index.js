@@ -7,6 +7,7 @@ const owners = require("./owners")
 const branch=require("./branch")
 const booking=require("./booking")
 const roleauth=require("./roleauth")
+const bullBoard = require("./bullBoard");
 try{
     const env=require("dotenv").config()
     console.log("env files loaded")
@@ -24,6 +25,7 @@ app.use("/cars",cars)
 app.use("/owners",owners)
 app.use("/branch",branch)
 app.use("/bookingApi",booking)
+app.use("/admin/queues", bullBoard.getRouter());
 // app.use('/api/cars', require('./routes/cars'));
 // app.use('/api/bookings', require('./routes/bookings'));
 // app.use('/api/branches', require('./routes/branches'));

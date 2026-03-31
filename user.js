@@ -294,15 +294,62 @@ const {pass}=req.body
         res.status(500).json({message:"jwt error"})
         return
     }
-    if(!payload.change){
-        res.status(401).json({message:"invalid token"})
-        return
-    }
+    
 const newPass=await bcrypt.hash(pass,10)
     try{
+        const user=await pool.query(
+            `SELECT role FROM ${process.env.table} where email=$1`,[payload.email]
+        )
+        if(user.rows.length==0){
+             res.status(400).json({message:"user not found"})
+        return
+        }
         const result=await pool.query(
             `UPDATE ${process.env.table} SET encrypted_pass=$1 WHERE email=$2`,
             [newPass,payload.email]
+        )
+        if(!result){
+            res.status(500).json({message:"internal server error ",e})
+            return
+        }
+        res.status(200).json({message:"password successfully changed"})
+    }catch(e){
+        res.status(500).json({message:`internal server error ${e}`})
+    }
+})
+router.put("/superAdmin/changePass/:email",rateLimiter,async(req,res)=>{
+    const header=req.headers.authorization
+const {pass}=req.body
+const {email}=req.params
+    const token=header.split(" ")[1]
+    if(!token){
+        res.status(401).json({message:"token not found"})
+        return
+    }
+    const payload=await veriftJWT(token)
+    if(!payload){
+        res.status(500).json({message:"jwt error"})
+        return
+    }
+    if(payload.role!=="superadmin"){
+        res.status(401).json({message:"unauthoraized"})
+        return
+    }
+
+
+    try{
+        const user=await pool.query(
+            `SELECT role FROM ${process.env.Management} where email=$1`,[email]
+        )
+        if(user.rows.length==0){
+             res.status(400).json({message:"user not found"})
+        return
+        }
+        
+        const newPass=await bcrypt.hash(pass,10)
+        const result=await pool.query(
+            `UPDATE ${process.env.Management} SET encrypted_pass=$1 WHERE email=$2`,
+            [newPass,email]
         )
         if(!result){
             res.status(500).json({message:"internal server error ",e})
@@ -412,6 +459,33 @@ router.post("/LoginOwnerAccount", rateLimiter, async (req, res) => {
         res.status(500).json({ message: "internal server err at /ownerAccount", error: e.message });
     }
 });
+router.put("/Admins/addExpoToken",rateLimiter,async(req,res)=>{
+    const{token,email}=req.body
+    const header=req.headers.authorization
+    if(!header){
+        res.status(401).json({message:"authorization token not found"})
+         return
+    }
+    const verificationToken=header.split(" ")[1]
+    try{
+         payload=await veriftJWT(verificationToken)
+         if(!payload){
+            res.status(401).json({message:"jwt expired"})
+            return
+         } 
+const result=await pool.query(
+    `UPDATE ${process.env.Management} SET expo_token=$1 WHERE id=$2`,
+    [token,payload.id]
+)
+if(!result){
+    res.status(500).json({message:"internal server error"})
+    return
+}
+res.status(200).json({message:"updated expo token"})
+    }catch(e){
+        res.status(500).json({message:"internal server error",e})
+    }
+})
 router.put("/addExpoToken",rateLimiter,async(req,res)=>{
     const{token,email}=req.body
     const header=req.headers.authorization
@@ -533,7 +607,6 @@ router.get("/getData", rateLimiter, async (req, res) => {
     try {
         const header = req.headers.authorization;
         if (!header) {
-            // 💥 FIX: Added 'return' to stop execution if there's an error!
             return res.status(401).json({ message: "token not found" }); 
         }
 

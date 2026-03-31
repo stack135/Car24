@@ -2,7 +2,7 @@ const { Pool } = require("pg");
 const Redis = require("ioredis");
 
 const pool = new Pool({
-  host: "postgres",
+  host: "100.117.158.50",
   port: 5432,       
   user: "admin",
   password: "admin",
@@ -16,12 +16,18 @@ const pool = new Pool({
 //   }
 // });
 const redis = new Redis({
-  host: "redis",
-  port: 6379
+  host: "localhost",
+  port: 6379,
+  maxRetriesPerRequest: null 
 });
 function connecttodb() {
   try {
-    console.log("Connected to PostgreSQL and Redis");
+    if(pool){
+console.log("Connected to PostgreSQL and Redis");
+    }else{
+      console.log("error connecting to db")
+    }
+    
   } catch (e) {
     console.log("Error connecting to db", e);
   }

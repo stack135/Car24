@@ -7,6 +7,7 @@ const rateLimiter = require("./rateLimiter")
 const razorpay = require("./connectRazorPay") 
 const crypto = require("crypto");
 const sendNotification=require("./expoNotification")
+const bookingQueue=require("./queues/bookingQueue")
 require("dotenv").config()
 function calculatePrice(slots, pricing) {
   if (!Array.isArray(slots) || slots.length === 0) {
@@ -62,6 +63,7 @@ async function paymentfunction(amount, bookingId) {
 
 function calculateAdvanceAmount(totalHours) {
   let remaining = totalHours;
+  console.log("totalHours=",totalHours)
   let advance = 0;
 
   const days = Math.floor(remaining / 24);
@@ -158,9 +160,9 @@ router.post("/bookCar", rateLimiter, async (req, res) => {
     }
 
     // ── 5. Get car pricing ──
-    const carPrice = await pool.query(
+    const carPrice = await client.query(
       `SELECT six_hr_price, twelve_hr_price, twentyfour_hr_price 
-       FROM ${process.env.cars_table} WHERE id=$1`,
+       FROM cars WHERE id=$1`,
       [carId]
     ); 
     console.log('Car pricing:', carPrice.rows[0]);
@@ -362,13 +364,16 @@ router.post("/verify-payment", async (req, res) => {
     );
 
     if (bookingRes.rows.length === 0) {
+      
       return res.status(404).json({ message: "Booking not found" });
     }
+
 const userRes=await client.query(
-  `SELECT expo_token FROM TABLE users WHERE id=$1`,[bookingRes.userId]
+  `SELECT * FROM  users WHERE id=$1`,[bookingRes.rows[0].userId]
 )
 if(userRes.rows.length===0){
-  res.status(400).json({message:"user not found"})
+
+  return res.status(400).json({message:"user not found"})
 }
 userData=userRes.rows[0]
 const expoToken=userData.expo_token
@@ -445,13 +450,80 @@ const expoToken=userData.expo_token
          remaining_amount      = $2,
          "razorpay_payment_id" = $3,
          "updatedAt"           = NOW(),
-         "confirmationNumber"  = $4
+         "confirmationNumber"  = $4,
+          "razorpay_signature"=$6
        WHERE "paymentId" = $5`,
-      [advance, remaining, razorpay_payment_id, otp, razorpay_order_id]
+      [advance, remaining, razorpay_payment_id, otp, razorpay_order_id,generated_signature]
     );
 
     await client.query("COMMIT");
     console.log(`✅ Booking ${booking.id} confirmed`);
+    // ⏰ Schedule Ride Jobs
+const dropoffTime = new Date(booking.dropoffdate).getTime();
+const now = Date.now();
+
+const safeDelay = (time) => {
+  const d = time - Date.now();
+  return isNaN(d) || d < 0 ? 0 : d;
+};
+console.log("⏱ Now:", new Date());
+console.log("⏱ Dropoff:", new Date(dropoffTime));
+
+// ------------------ 📩 REMINDER ------------------
+const reminderTime = dropoffTime - 3 * 60 * 60 * 1000;
+
+console.log("Reminder delay:", safeDelay(reminderTime));
+
+await bookingQueue.add(
+  "ride-reminder",
+  { bookingId: booking.id },
+  {
+    delay: safeDelay(reminderTime),
+    jobId: `reminder-${booking.id}`,
+    attempts: 3,
+    backoff: { type: "exponential", delay: 5000 },
+    removeOnComplete: true,
+    removeOnFail: false
+  }
+);
+
+// ------------------ 💸 PENALTY ------------------
+const penaltyTime = dropoffTime + 10 * 60 * 1000;
+
+console.log("Penalty delay:", safeDelay(penaltyTime));
+
+await bookingQueue.add(
+  "ride-penalty",
+  { bookingId: booking.id },
+  {
+    delay: safeDelay(penaltyTime),
+    jobId: `penalty-${booking.id}`,
+    attempts: 3,
+    backoff: { type: "exponential", delay: 5000 },
+    removeOnComplete: true,
+    removeOnFail: false
+  }
+);
+
+
+const extendTime = dropoffTime + 3 * 60 * 60 * 1000;
+
+console.log("Extend delay:", safeDelay(extendTime));
+
+await bookingQueue.add(
+  "ride-auto-extend",
+  { bookingId: booking.id },
+  {
+    delay: safeDelay(extendTime),
+    jobId: `extend-${booking.id}`,
+    attempts: 3,
+    backoff: { type: "exponential", delay: 5000 },
+    removeOnComplete: true,
+    removeOnFail: false
+  }
+);
+
+console.log("🚀 All jobs scheduled for booking:", booking.id);
 if(expoToken){
   const data={
 navigation:"/booking",
@@ -906,17 +978,17 @@ router.get("/getStaffTasks", rateLimiter, async (req, res) => {
       `
       SELECT 
         b.id AS booking_id,
-        b."userId",
-        b."pickupDate",
-        b."dropoffDate",
+        b."userid",
+        b."pickupdate",
+        b."dropoffdate",
         b.ride_start_time,
         b.ride_end_time,
         u.name AS customer_name,
         c.model AS car_model,
-        c."licensePlate" AS car_plate
+        c."licenseplate" AS car_plate
       FROM bookings b
-      JOIN users u ON b."userId" = u.id
-      JOIN cars c ON b."carId" = c.id
+      JOIN users u ON b."userid" = u.id
+      JOIN cars c ON b."carid" = c.id
       WHERE (b.ride_start_time IS NULL AND b.status = 'confirmed') -- Pickups
          OR (b.ride_start_time IS NOT NULL AND b.ride_end_time IS NULL AND b.status = 'confirmed') -- Returns
       `
