@@ -20,16 +20,14 @@ const redis = new Redis({
   port: 6379,
   maxRetriesPerRequest: null 
 });
-function connecttodb() {
+async function connecttodb() {
   try {
-    if(pool){
-console.log("Connected to PostgreSQL and Redis");
-    }else{
-      console.log("error connecting to db")
-    }
-    
+    await pool.query("SELECT 1");  
+    await redis.ping();             
+
+    console.log("✅ Connected to PostgreSQL and Redis");
   } catch (e) {
-    console.log("Error connecting to db", e);
+    console.log("❌ Error connecting to DB/Redis:", e.message);
   }
 }
 
