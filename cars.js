@@ -479,7 +479,7 @@ router.get("/get_car/:id", async (req, res) => {
     const result = await pool.query(`
       SELECT c.*, b.name as branch_name, b.city as branch_city, b.address as branch_address
       FROM  cars c
-      JOIN branches b ON c."branchid" = b.id
+      JOIN branches b ON c."branchId" = b.id
       WHERE c.id = $1 
       AND c.approvalstatus = 'approved'
     `, [id]);
