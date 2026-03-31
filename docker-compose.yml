@@ -12,9 +12,9 @@ services:
   ports: 
    - "3000:3000"
   depends_on: 
-   - minIo
+  
    - redis
-   - postgres
+ 
   environment: 
    PORT : 3000
    nodemailer_pass : njry tlkh carc dpbw
