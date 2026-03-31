@@ -29,5 +29,6 @@ const{ rideReminderJob,
         console.log("Unknown job");
     }
   },
-  { connection:redis }
+  { connection:{host: "redis",
+      port: 6379}}
 );
