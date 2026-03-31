@@ -281,7 +281,7 @@ router.get("/get_cars", rateLimiter, async (req, res) => {
     let query = `
       SELECT c.*, b.name as branch_name
       FROM cars c
-      JOIN branches b ON c."branchid" = b.id
+      JOIN branches b ON c."branchId" = b.id
       WHERE c.approvalstatus = 'approved'
       
     `;
@@ -324,7 +324,7 @@ if (colour) {
 }
 
 if (branch) {
-  query += ` AND c."branchid" = $${count++}`;
+  query += ` AND c."branchId" = $${count++}`;
   values.push(parseInt(branch));
 }
 
@@ -385,7 +385,7 @@ if (branch) {
     let countQuery = `
       SELECT COUNT(*) 
       FROM cars c
-      JOIN branches b ON c."branchid" = b.id
+      JOIN branches b ON c."branchId" = b.id
       WHERE c.approvalstatus = 'approved'
       
     `;
@@ -472,7 +472,7 @@ if (branch) {
   }
 });
 // GET single car by ID
-router.get("/get_car/:id", async (req, res) => {
+router.get("/get_car/:id", rateLimiter,async (req, res) => {
   try {
     const { id } = req.params;
     console.log("came id=",id)
@@ -521,7 +521,7 @@ console.log("result",result)
     res.status(500).json({ message: 'Internal server error', error: e.message });
   }
 });
-router.get("/branch_cars/:id", async (req, res) => {
+router.get("/branch_cars/:id",rateLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const { isavailable, approvalstatus,status } = req.query;
@@ -557,7 +557,7 @@ if(status!==undefined){
   }
 });
 // branches router
-router.get("/get_branches", async (req, res) => {
+router.get("/get_branches",rateLimiter, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id, name, city FROM branches ORDER BY city
@@ -568,7 +568,7 @@ router.get("/get_branches", async (req, res) => {
   }
 });
 
-router.put("/updateCar/:id", async (req, res) => {
+router.put("/updateCar/:id",rateLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const allowedFields = [
