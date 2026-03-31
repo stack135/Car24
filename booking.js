@@ -51,7 +51,6 @@ function calculatePrice(slots, pricing) {
 
   return finalAmount;
 }
-
 async function paymentfunction(amount, bookingId) {
   const order=await razorpay.orders.create({
     amount: amount * 100,
@@ -60,7 +59,6 @@ async function paymentfunction(amount, bookingId) {
   })  
   return order
 }
-
 function calculateAdvanceAmount(totalHours) {
   let remaining = totalHours;
   console.log("totalHours=",totalHours)
@@ -87,7 +85,6 @@ function calculateAdvanceAmount(totalHours) {
 
   return advance;
 }
-
 router.post("/bookCar", rateLimiter, async (req, res) => {
   const client  = await pool.connect();
   const { carId, branchId, slots, startTime, endTime, useCredits } = req.body;
@@ -322,7 +319,6 @@ router.post("/bookCar", rateLimiter, async (req, res) => {
     client.release();
   }
 });
-
 router.post("/verify-payment", async (req, res) => {
   const client = await pool.connect();
 
@@ -364,19 +360,9 @@ router.post("/verify-payment", async (req, res) => {
     );
 
     if (bookingRes.rows.length === 0) {
-      
       return res.status(404).json({ message: "Booking not found" });
     }
 
-const userRes=await client.query(
-  `SELECT * FROM  users WHERE id=$1`,[bookingRes.rows[0].userId]
-)
-if(userRes.rows.length===0){
-
-  return res.status(400).json({message:"user not found"})
-}
-userData=userRes.rows[0]
-const expoToken=userData.expo_token
     const booking = bookingRes.rows[0];
     console.log('Booking fetched:', booking);
 
@@ -450,99 +436,57 @@ const expoToken=userData.expo_token
          remaining_amount      = $2,
          "razorpay_payment_id" = $3,
          "updatedAt"           = NOW(),
-         "confirmationNumber"  = $4,
-          "razorpay_signature"=$6
+         "confirmationNumber"  = $4
        WHERE "paymentId" = $5`,
-      [advance, remaining, razorpay_payment_id, otp, razorpay_order_id,generated_signature]
+      [advance, remaining, razorpay_payment_id, otp, razorpay_order_id]
     );
 
     await client.query("COMMIT");
-    console.log(`✅ Booking ${booking.id} confirmed`);
-    // ⏰ Schedule Ride Jobs
-const dropoffTime = new Date(booking.dropoffdate).getTime();
-const now = Date.now();
+        console.log(`✅ Booking ${booking.id} confirmed`);
 
-const safeDelay = (time) => {
-  const d = time - Date.now();
-  return isNaN(d) || d < 0 ? 0 : d;
-};
-console.log("⏱ Now:", new Date());
-console.log("⏱ Dropoff:", new Date(dropoffTime));
+    const userRes=await client.query(
+      `SELECT * FROM  users WHERE id=$1`,[bookingRes.rows[0].userId]
+          )
+        if(userRes.rows.length===0){
 
-// ------------------ 📩 REMINDER ------------------
-const reminderTime = dropoffTime - 3 * 60 * 60 * 1000;
+        return res.status(400).json({message:"user not found"})
+          }
+          userData=userRes.rows[0]
+      const expoToken=userData.expo_token
 
-console.log("Reminder delay:", safeDelay(reminderTime));
-
-await bookingQueue.add(
-  "ride-reminder",
-  { bookingId: booking.id },
-  {
-    delay: safeDelay(reminderTime),
-    jobId: `reminder-${booking.id}`,
-    attempts: 3,
-    backoff: { type: "exponential", delay: 5000 },
-    removeOnComplete: true,
-    removeOnFail: false
-  }
-);
-
-// ------------------ 💸 PENALTY ------------------
-const penaltyTime = dropoffTime + 10 * 60 * 1000;
-
-console.log("Penalty delay:", safeDelay(penaltyTime));
-
-await bookingQueue.add(
-  "ride-penalty",
-  { bookingId: booking.id },
-  {
-    delay: safeDelay(penaltyTime),
-    jobId: `penalty-${booking.id}`,
-    attempts: 3,
-    backoff: { type: "exponential", delay: 5000 },
-    removeOnComplete: true,
-    removeOnFail: false
-  }
-);
-
-
-const extendTime = dropoffTime + 3 * 60 * 60 * 1000;
-
-console.log("Extend delay:", safeDelay(extendTime));
-
-await bookingQueue.add(
-  "ride-auto-extend",
-  { bookingId: booking.id },
-  {
-    delay: safeDelay(extendTime),
-    jobId: `extend-${booking.id}`,
-    attempts: 3,
-    backoff: { type: "exponential", delay: 5000 },
-    removeOnComplete: true,
-    removeOnFail: false
-  }
-);
-
-console.log("🚀 All jobs scheduled for booking:", booking.id);
-if(expoToken){
-  const data={
-navigation:"/booking",
-bookingid:booking.id
-  }
-const exposend=await sendNotification(expoToken,"Booking Confirmation",`Your Booking confirmation number is ${otp} `,data)
-
-if(exposend){
-  console.log("notification send")
-}else{
-   console.log("notification notsend")
-}
-}
+    
 
     res.json({
       message:   "Payment verified successfully",
       bookingId: booking.id,
       otp,
     });
+
+
+          if (expoToken) {
+        try {
+          const data = {
+            url: `/(customer)/booking/${booking.id}`, // ✅ important
+            bookingId: booking.id
+          };
+
+          const expoSend = await sendNotification(
+            expoToken,
+            "Booking Confirmation",
+            `Your booking confirmation number is ${otp}`,
+            data
+          );
+
+          if (expoSend) {
+            console.log("✅ Notification sent");
+          } else {
+            console.log("❌ Notification failed");
+          }
+
+        } catch (error) {
+          console.error("🚨 Notification error:", error);
+        }
+      }
 
   } catch (err) {
     console.error('=== verify-payment ERROR ===');
@@ -553,7 +497,6 @@ if(exposend){
     client.release();
   }
 });
-
 router.post("/cancelBooking/:id", rateLimiter, async (req, res) => {
   const client = await pool.connect();
   try {
@@ -631,7 +574,6 @@ router.post("/cancelBooking/:id", rateLimiter, async (req, res) => {
     client.release();
   }
 });
- 
 router.get("/getBooking/:id", rateLimiter, async (req, res) => {
   try {
     const { id } = req.params;
@@ -693,7 +635,6 @@ router.get("/getBooking/:id", rateLimiter, async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: e.message });
   }
 });
-
 router.get("/myBookings", rateLimiter, async (req, res) => {
   try {
     // ── 1. Extract and Verify JWT Token ──
@@ -787,7 +728,6 @@ router.get("/myBookings", rateLimiter, async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: e.message });
   }
 });
-
 router.get("/ownerBookings", rateLimiter, async (req, res) => {
   try {
     // ── 1. Extract and Verify JWT Token ──
@@ -877,7 +817,6 @@ router.get("/ownerBookings", rateLimiter, async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: e.message });
   }
 });
-// In booking.js or a separate credits router
 router.get("/myCredits", rateLimiter, async (req, res) => {
   try {
      const header = req.headers.authorization;
@@ -929,7 +868,6 @@ router.get("/myCredits", rateLimiter, async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: e.message });
   }
 });
-
 router.get("/checkAvailability", rateLimiter, async (req, res) => {
   try {
     const { carId, pickupDate, dropoffDate } = req.query;
@@ -959,7 +897,6 @@ router.get("/checkAvailability", rateLimiter, async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: e.message });
   }
 });
-
 router.get("/getStaffTasks", rateLimiter, async (req, res) => {
   const header = req.headers.authorization;
   if (!header) return res.status(401).json({ message: "missing headers" });
@@ -978,17 +915,17 @@ router.get("/getStaffTasks", rateLimiter, async (req, res) => {
       `
       SELECT 
         b.id AS booking_id,
-        b."userid",
-        b."pickupdate",
-        b."dropoffdate",
+        b."userId",
+        b."pickupDate",
+        b."dropoffDate",
         b.ride_start_time,
         b.ride_end_time,
         u.name AS customer_name,
         c.model AS car_model,
         c."licenseplate" AS car_plate
       FROM bookings b
-      JOIN users u ON b."userid" = u.id
-      JOIN cars c ON b."carid" = c.id
+      JOIN users u ON b."userId" = u.id
+      JOIN cars c ON b."carId" = c.id
       WHERE (b.ride_start_time IS NULL AND b.status = 'confirmed') -- Pickups
          OR (b.ride_start_time IS NOT NULL AND b.ride_end_time IS NULL AND b.status = 'confirmed') -- Returns
       `
@@ -1002,7 +939,6 @@ router.get("/getStaffTasks", rateLimiter, async (req, res) => {
     res.status(500).json({ message: "internal server error" });
   }
 });
-
 router.get("/carKeyVerify", rateLimiter, async (req, res) => {
   try {
     const header = req.headers.authorization;
@@ -1227,8 +1163,6 @@ router.put("/endRide/:bookingId", rateLimiter, async (req, res) => {
     return res.status(500).json({ message: "internal server error" });
   }
 });
-
-
 router.get("/test-razorpay", async (req, res) => {
   try {
     console.log("Attempting Razorpay Test with Key:", process.env.RazorpayAPIKey?.substring(0, 8) + "...");
@@ -1253,6 +1187,5 @@ router.get("/test-razorpay", async (req, res) => {
       error: error 
     });
   }
-});
- 
+}); 
 module.exports=router 
