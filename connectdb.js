@@ -9,17 +9,17 @@ const pool = new Pool({
   database: "car24"
 });
 
-// const redis = new Redis("redis://redis:6379", {
-//   retryStrategy: (times) => {
-//     console.log("Retrying Redis...", times);
-//     return Math.min(times * 100, 2000);
-//   }
-// });
-const redis = new Redis({
-  host: "redis",
-  port: 6379,
-  maxRetriesPerRequest: null 
+const redis = new Redis("redis://redis:6379", {
+  retryStrategy: (times) => {
+    console.log("Retrying Redis...", times);
+    return Math.min(times * 100, 2000);
+  }
 });
+// const redis = new Redis({
+//   host: "redis",
+//   port: 6379,
+//   maxRetriesPerRequest: null 
+// });
 async function connecttodb() {
   try {
     await pool.query("SELECT 1");  
