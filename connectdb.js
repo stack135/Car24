@@ -16,7 +16,7 @@ const pool = new Pool({
 //   }
 // });
 const redis = new Redis({
-  host: "localhost",
+  host: "redis",
   port: 6379,
   maxRetriesPerRequest: null 
 });
